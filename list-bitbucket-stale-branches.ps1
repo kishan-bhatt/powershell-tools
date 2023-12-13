@@ -1,52 +1,42 @@
-# Define BitBucket Server details
-$bitbucketServerUrl = "https://your-bitbucket-server"
-$projectKey = "YOUR_PROJECT_KEY"
-$repoSlug = "YOUR_REPO_SLUG"
+param (
+    [string]$BitBucketServer
+)
 
-# Basic Authentication (Update as per your auth method)
-$user = "your-username"
-$pass = "your-password"
-$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("$user:$pass")))
+# Function to clone and check branches in a repository
+function Get-StaleAndMergedBranches($repoUrl) {
+    # Clone the repository temporarily
+    $repoName = $repoUrl.Split('/')[-1]
+    $clonePath = Join-Path $env:TEMP $repoName
+    git clone $repoUrl $clonePath
 
-# Function to get branches from BitBucket
-function Get-BitBucketBranches {
-    param (
-        [int]$daysOld = 60
-    )
+    # Change to the repository directory
+    Push-Location $clonePath
 
-    # API Endpoint to list branches
-    $apiUrl = "$bitbucketServerUrl/rest/api/1.0/projects/$projectKey/repos/$repoSlug/branches"
+    # Fetch all branches
+    git fetch --all
 
-    # Call BitBucket API
-    try {
-        $branches = Invoke-RestMethod -Uri $apiUrl -Method Get -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-    }
-    catch {
-        Write-Error "Error fetching branches: $_"
-        return
-    }
+    # Get merged branches
+    $mergedBranches = git branch -r --merged master | %{ $_.Trim() }
 
-    # Filter branches based on criteria
-    $currentDate = Get-Date
-    $branchesFiltered = $branches | Where-Object {
-        # Logic to determine if a branch is stale, merged, or unmerged but no commits since X days
-        # Placeholder logic - needs to be replaced with actual criteria
-        $_.lastCommitDate -lt $currentDate.AddDays(-$daysOld) # Example criterion
-    }
+    # Identify stale branches (example: branches not updated in the last 30 days)
+    $staleBranches = git for-each-ref --sort=committerdate refs/remotes/ --format='%(committerdate:short) %(refname)' | 
+                     Where-Object { $_ -match '(\d{4}-\d{2}-\d{2})' -and (Get-Date $Matches[1]) -lt (Get-Date).AddDays(-30) }
 
-    return $branchesFiltered
+    # Output the branches
+    Write-Host "Repository: $repoName"
+    Write-Host "Merged Branches:"
+    $mergedBranches
+    Write-Host "Stale Branches (Last commit > 30 days):"
+    $staleBranches
+
+    # Return to the original directory and delete the temporary clone
+    Pop-Location
+    Remove-Item $clonePath -Recurse -Force
 }
 
-# User input for days
-$days = Read-Host -Prompt "Enter the number of days to check for stale branches (default is 60)"
-if ([string]::IsNullOrWhiteSpace($days)) {
-    $days = 60
+# Example: Listing repositories (this part may vary based on how you access your BitBucket server repositories)
+# For each repository URL, call the Get-StaleAndMergedBranches function
+$repositoryUrls = @("https://example.com/repo1.git", "https://example.com/repo2.git") # Replace with actual repository URLs
+foreach ($url in $repositoryUrls) {
+    Get-StaleAndMergedBranches $url
 }
-
-# Fetch and filter branches
-$filteredBranches = Get-BitBucketBranches -daysOld $days
-
-# Export to CSV
-$filteredBranches | Select-Object -Property name | Export-Csv -Path "branches.csv" -NoTypeInformation
-
-Write-Host "Branches exported to branches.csv"
