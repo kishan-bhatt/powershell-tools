@@ -1,0 +1,41 @@
+param (
+    [string]$Filename,
+    [bool]$DryRun = $false,
+    [string]$RemoteName = "origin"
+)
+
+function Delete-GitBranches {
+    param (
+        [string]$BranchListFile,
+        [bool]$DryRun,
+        [string]$RemoteName
+    )
+
+    # Check if the file exists
+    if (-not (Test-Path $BranchListFile)) {
+        Write-Host "Error: File not found - $BranchListFile"
+        return
+    }
+
+    # Read the file and get the list of branches
+    $branches = Get-Content $BranchListFile
+
+    # Iterate over each branch
+    foreach ($branch in $branches) {
+        if ($DryRun) {
+            # Dry run: Display the branch that would be deleted
+            Write-Host "Dry run: Would delete branch '$branch' from remote '$RemoteName'"
+        } else {
+            # Actual deletion of remote branch
+            try {
+                git push --delete $RemoteName $branch
+                Write-Host "Successfully deleted branch '$branch' from remote '$RemoteName'"
+            } catch {
+                Write-Host "Error deleting branch '$branch' from remote '$RemoteName': $_"
+            }
+        }
+    }
+}
+
+# Call the function with the provided parameters
+Delete-GitBranches -BranchListFile $Filename -DryRun $DryRun -RemoteName $RemoteName
