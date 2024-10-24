@@ -4,17 +4,16 @@ using System.Collections.Generic;
 namespace MyApp.Common
 {
     /// <summary>
-    /// A generic class to represent the result of an operation throughout the application.
-    /// It provides status, messages, errors, and data payload.
+    /// A class to represent the result of an operation throughout the application.
+    /// It provides status, messages, errors, and optional data.
     /// </summary>
-    /// <typeparam name="T">The type of the data payload.</typeparam>
-    public class Result<T>
+    public class Result
     {
         // Indicates if the operation was successful.
         public bool IsSuccess { get; private set; }
 
-        // Contains the data from the operation, if applicable.
-        public T Data { get; private set; }
+        // Contains the result data, if any.
+        public object Data { get; private set; }
 
         // List of messages to convey additional information (e.g., warnings, notifications).
         public List<string> Messages { get; private set; } = new List<string>();
@@ -22,11 +21,11 @@ namespace MyApp.Common
         // List of errors that occurred during the operation.
         public List<string> Errors { get; private set; } = new List<string>();
 
-        // Optional: Track when the result was created.
+        // Timestamp to track when the result was created.
         public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
 
-        // Private constructor to enforce usage of static factory methods.
-        private Result(bool isSuccess, T data = default)
+        // Private constructor to enforce usage of factory methods.
+        private Result(bool isSuccess, object data = null)
         {
             IsSuccess = isSuccess;
             Data = data;
@@ -35,9 +34,9 @@ namespace MyApp.Common
         /// <summary>
         /// Creates a successful result with optional data and messages.
         /// </summary>
-        public static Result<T> Success(T data = default, params string[] messages)
+        public static Result Success(object data = null, params string[] messages)
         {
-            var result = new Result<T>(true, data);
+            var result = new Result(true, data);
             if (messages != null) result.Messages.AddRange(messages);
             return result;
         }
@@ -45,9 +44,9 @@ namespace MyApp.Common
         /// <summary>
         /// Creates a failed result with optional error messages.
         /// </summary>
-        public static Result<T> Failure(params string[] errors)
+        public static Result Failure(params string[] errors)
         {
-            var result = new Result<T>(false);
+            var result = new Result(false);
             if (errors != null) result.Errors.AddRange(errors);
             return result;
         }
@@ -55,7 +54,7 @@ namespace MyApp.Common
         /// <summary>
         /// Adds a message to the result.
         /// </summary>
-        public Result<T> AddMessage(string message)
+        public Result AddMessage(string message)
         {
             Messages.Add(message);
             return this;
@@ -64,7 +63,7 @@ namespace MyApp.Common
         /// <summary>
         /// Adds an error to the result.
         /// </summary>
-        public Result<T> AddError(string error)
+        public Result AddError(string error)
         {
             Errors.Add(error);
             return this;
