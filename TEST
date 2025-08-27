@@ -1,0 +1,85 @@
+{
+  "product_id": "product-12345",
+  "product_name": "AwesomeProduct",
+  "data_sources": [
+    {
+      "type": "file_system",
+      "source_name": "local_config_files",
+      "path": "/configs/product123/",
+      "access_control": {
+        "permissions": "read-only",
+        "user": "config_reader",
+        "group": "admins"
+      },
+      "description": "Configuration files stored locally"
+    },
+    {
+      "type": "sql_server",
+      "source_name": "product_config_db",
+      "host": "db.example.com",
+      "port": 1433,
+      "database": "product_configs",
+      "table": "configuration_data",
+      "credentials": {
+        "user": "dbuser",
+        "password": "s3cr3t"
+      },
+      "description": "Configuration data stored in SQL Server"
+    },
+    {
+      "type": "split_io",
+      "source_name": "feature_flag_source",
+      "api_key": "split-api-key-xyz123",
+      "endpoint": "https://api.split.io",
+      "feature_flag": "new_feature_enabled",
+      "description": "Feature flags from Split.io service"
+    }
+  ],
+  "comments": "This configuration describes all sources where information is being read from for the product."
+}
+{
+  "snapshot_id": "snapshot-001",
+  "product_id": "product-12345",
+  "configuration_hash": "5d41402abc4b2a76b9719d911017c592",
+  "timestamp": "2025-08-27T14:23:00Z",
+  "data_sources": [
+    {
+      "type": "sql_server",
+      "source_name": "product_config_db",
+      "hashed_fields": {
+        "server": "a1b2c3d4e5f67890abc123abc456def0",
+        "database": "b2c3d4e5f67890abc123abc456def0a1",
+        "schema": "c3d4e5f67890abc123abc456def0a1b2",
+        "table": "d4e5f67890abc123abc456def0a1b2c3",
+        "primary_key_entity": "e5f67890abc123abc456def0a1b2c3d4"
+      }
+    },
+    {
+      "type": "file_system",
+      "source_name": "local_config_files",
+      "hashed_fields": {
+        "path": "f67890abc123abc456def0a1b2c3d4e5",
+        "permissions": "67890abc123abc456def0a1b2c3d4e5f",
+        "user": "890abc123abc456def0a1b2c3d4e5f67"
+      }
+    },
+    {
+      "type": "split_io",
+      "source_name": "feature_flag_source",
+      "hashed_fields": {
+        "api_key": "90abc123abc456def0a1b2c3d4e5f678",
+        "endpoint": "abc123abc456def0a1b2c3d4e5f67890",
+        "feature_flag": "bc123abc456def0a1b2c3d4e5f67890a"
+      }
+    }
+  ],
+  "previous_snapshot_id": "snapshot-000",
+  "changes": [
+    {
+      "source_name": "sql_server",
+      "change_type": "updated",
+      "description": "Schema/table structure updated"
+    }
+  ],
+  "comments": "Snapshot includes only hashed values for sensitive configuration fields"
+}
